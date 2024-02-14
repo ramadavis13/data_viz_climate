@@ -1,0 +1,488 @@
+---
+title: "Data Visualization with Climate Data"
+output: html_notebook
+---
+
+Data Visualization with Climate Data
+Instructor: Raven Davis, raven.davis@library.gatech.edu
+ 
+
+Objectives: 
+1. Learn how to do data visualization using base R
+2. Learn basics of ggplot2 data visualization library
+
+
+Getting Started:
+- You can find R at <https://cran.r-project.org/>
+- You can find R Studio at <https://posit.co/>
+
+Library resources
+https://learning.oreilly.com/home/
+https://library.gatech.edu/ 
+
+The Urban Climate Lab is a group of researchers at the Georgia Institute of Technology who are exploring the connections between climate change and the built environment. Their research highlights the range of mechanisms through which land use change, both within and outside of cities, is driving ongoing warming trends and impacting human and environmental health.
+https://urbanclimate.gatech.edu/
+#############################################################
+
+Loading packages
+
+```{r}
+# install.packages("tidyverse") #installs tidyverse
+
+library(tidyverse) #loads tidyverse
+
+```
+
+Importing data
+
+```{r}
+getwd() #check current working directory
+```
+
+```{r}
+
+climate_data = read_csv("clean_climate.csv")
+
+```
+
+
+Exploring the data
+
+
+```{r}
+glimpse(climate_data) # look at data
+```
+
+
+
+```{r}
+summary(climate_data) # get summary statistics for data
+```
+
+Plotting in Base R
+
+
+Scatter Plot
+```{r}
+plot(climate_data$Date.Sensor.ID, climate_data$X5th.Street.Bridge)
+```
+
+
+Line graph
+```{r}
+plot(climate_data$Date.Sensor.ID, climate_data$X5th.Street.Bridge, type="l") # use type ="l" to indicate that you want to create a line graph
+```
+
+
+Histogram
+```{r}
+hist(climate_data$Baker.Building)
+```
+
+
+Histogram with color
+```{r}
+hist(climate_data$Baker.Building, col = "lightblue")
+```
+
+
+######################################################
+
+Plotting with ggplot
+
+
+Grammar of Graphics
+1. data
+2. aesthetic mappings
+3. geometry
+
+```{r}
+# blueprint for ggplot function
+"ggplot(data = <Data>,
+  mapping = aes(<Mappings>) +
+  geom
+"
+```
+
+
+Building your plot iteratively 
+
+```{r}
+ggplot(data = climate_data, 
+       mapping = aes(x = Date.Sensor.ID,
+                     y = avg_campus_temp,
+                     color= temp_category)) +
+    geom_point()
+```
+
+Data
+
+We can use dplyr functions to extract the data we need.
+
+```{r}
+climate_data %>% 
+  select(Date.Sensor.ID, avg_campus_temp, temp_category) # creates tibble from subset of data frame
+```
+```{r}
+# uses subset of data to create plot
+climate_data %>% 
+  select(Date.Sensor.ID, avg_campus_temp, temp_category) %>% 
+  ggplot(mapping = aes(x=Date.Sensor.ID, 
+                       y=avg_campus_temp, 
+                       color = temp_category)) + 
+  geom_point() 
+```
+
+```{r}
+# we can iteratively filter out elements from our plot
+climate_data %>% 
+  select(Date.Sensor.ID, avg_campus_temp, temp_category) %>% 
+  filter(temp_category != "High") %>% 
+  ggplot(mapping = aes(x=Date.Sensor.ID, 
+                       y=avg_campus_temp, 
+                       color = temp_category)) + 
+  geom_point() 
+```
+
+Aesthetic mappings (many of these optional):
+1. x axis
+2. y axis
+3. color
+4. alpha
+5. size
+6. shape
+7. fill
+
+Axes
+```{r}
+# must determine our axes after we select the data we want to visualize
+climate_data %>% 
+  ggplot(mapping = aes(x=Date.Sensor.ID, y=Baker.Building))
+```
+
+
+```{r}
+climate_data %>% 
+  ggplot(mapping = aes(x=month, y=Baker.Building))
+```
+
+Color
+
+For the entire plot
+```{r}
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building, color="red")) +
+  geom_point() # change color from inside the aesthetic function
+```
+
+
+```{r}
+# can use color names as well as hexadecimal codes, RGB codes, and number in base R
+
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building)) +
+  geom_point(color="#3cb371") # change using color parameter within the geom function
+```
+
+
+```{r}
+# can map color to a specific variable's values
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building)) +
+  geom_point(aes(color=Baker.Building)) # change from within the aesthetic function within the geom function
+```
+
+```{r}
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building, color = Baker.Building)) +
+  geom_point() # change from within the aesthetic function
+```
+```{r}
+# can also set a custom color palette 
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building, color = temp_category)) +
+  scale_color_manual(values=c("#56B4E9","#F0E442","#a1b382")) +
+  geom_point() 
+```
+```{r}
+# also packages of pre built color palettes
+library(RColorBrewer)
+
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building, color = temp_category)) +
+  scale_color_brewer(palette = "Dark2") +
+  geom_point()
+  
+```
+```{r}
+# install.packages("ggsci")
+library("ggsci") # color palettes from some scientific journals
+
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building, color = temp_category)) +
+  scale_color_aaas() + #american association for the advancement of science
+  geom_point()
+
+```
+
+
+Alpha -> changes the transparency of the points in your plot
+```{r}
+climate_data %>% 
+  ggplot(mapping = aes(x=Date.Sensor.ID, y=Baker.Building)) +
+  geom_point(alpha=0.8) # can try different alpha values
+```
+
+```{r}
+climate_data %>% 
+  ggplot(mapping = aes(x=Date.Sensor.ID, y=Baker.Building)) +
+  geom_point(alpha=0.2)
+```
+```{r}
+# can set alpha based on variable value
+climate_data %>% 
+  ggplot(mapping = aes(x=Date.Sensor.ID, y=Baker.Building, alpha=Baker.Building)) +
+  geom_point()
+```
+
+
+Size
+
+```{r}
+# can change the size of all points in plot
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building, color = Baker.Building)) +
+  geom_point(size=3)
+```
+
+```{r}
+# can change size of points based on value of a variable
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building, color = Baker.Building, size=Baker.Building)) +
+  geom_point()
+```
+
+Shape
+```{r}
+# can assign shape to variable inside ggplot object
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building, shape=month)) +
+  geom_point()
+```
+
+
+```{r}
+# can assign shape to variable inside geom object
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building)) +
+  geom_point(aes(shape=month))
+```
+```{r}
+#also a list of different point shapes, numbered
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building, color = Baker.Building, size=Baker.Building)) +
+  geom_point(shape=21)
+```
+Fill
+
+```{r}
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building, fill = Baker.Building, color = "red")) +
+  geom_point(shape=21)
+```
+```{r}
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building)) +
+  geom_point(shape=21, aes(fill = Baker.Building, color = "red")) # when mapping aesthetics to variable, use aes
+```
+
+```{r}
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building)) +
+  geom_point(shape=21, fill="blue", color="red") # when you're setting the visuals of plot and not mapping visuals to a variable, don't need aes()
+```
+
+Pop Quiz!
+Create a plot using the starter code below and assign color, size, and shape
+
+```{r}
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=Baker.Building)) +
+  geom_point()
+```
+
+
+Choosing a Geom
+- Different types include scatterplots, bar charts, line graphs, histograms, density plots, boxplots, and more
+
+```{r}
+# scatterplots
+
+climate_data %>% 
+  ggplot(mapping = aes(x=Date.Sensor.ID, y=Baker.Building)) +
+  geom_point()
+```
+
+
+
+```{r}
+# histogram
+climate_data %>% 
+  ggplot(mapping = aes(x=Baker.Building)) +
+  geom_histogram()
+```
+```{r}
+climate_data %>% 
+  ggplot(mapping = aes(x=Baker.Building)) +
+  geom_histogram(binwidth = 1) #designate bin width value to avoid warning message
+```
+
+
+```{r}
+#line graph
+climate_data %>% 
+  ggplot(aes(x=Date.Sensor.ID, y=avg_campus_temp)) +
+  geom_line()
+```
+
+
+```{r}
+climate_data %>% 
+  ggplot(aes(x=month, y=Canopied.Walkway)) +
+  geom_boxplot() #gives interquartile range, min and max values
+```
+
+```{r}
+climate_data %>%
+    ggplot(mapping = aes(x=temp_category)) +
+    geom_bar()
+```
+
+
+
+Geom Positions
+
+stacking
+
+```{r}
+# subgroups of bar chart stacked on top of each other
+climate_data %>%
+    ggplot(mapping = aes(x=month, fill = temp_category)) +
+    geom_bar(position = "stack")
+```
+
+```{r}
+climate_data %>%
+    ggplot(mapping = aes(x=month, fill = temp_category)) +
+    geom_bar() # can do the same thing with fill
+```
+
+```{r}
+# percent stacked bar chart
+climate_data %>%
+    ggplot(mapping = aes(x=month, fill = temp_category)) +
+    geom_bar(position = "fill")
+```
+
+
+dodge
+
+```{r}
+# bar chart groups are next to each other instead of stacked on top
+climate_data %>%
+    ggplot(mapping = aes(x=month,fill=temp_category)) +
+    geom_bar(position = "dodge")
+```
+
+
+Jitter
+
+```{r}
+climate_data %>% 
+  ggplot(aes(x=month, y=Canopied.Walkway)) +
+  geom_point(alpha=0.5)
+```
+
+
+```{r}
+climate_data %>% 
+  ggplot(aes(x=month, y=Canopied.Walkway)) +
+  geom_point(alpha=0.5) + 
+  geom_jitter() # introduces randomness into the position of points in your plot
+```
+
+
+Labels and Legends
+
+```{r}
+# create title, labels for x and y axis
+climate_data %>%
+    ggplot(aes(x = Date.Sensor.ID, y=avg_campus_temp)) +
+    geom_line(color="#ff6245") +
+    labs(title = "Average Temperature Over the Summer",
+         x = "Date",
+         y = "Average Temperature")
+```
+```{r}
+# add a caption
+climate_data %>%
+    ggplot(aes(x = Date.Sensor.ID, y=avg_campus_temp)) +
+    geom_line(color="#ff6245") +
+    labs(title = "Average Temperature Over the Summer",
+         x = "Date",
+         y = "Average Temperature",
+         caption = "Source: Data collected by the Urban Climate Lab")
+```
+```{r}
+# change label for legend
+climate_data %>% 
+  ggplot(aes(x=month, y=avg_campus_temp, color = month)) +
+  geom_boxplot() +
+   labs(title = "Average Temperature Over the Summer",
+         x = "Month",
+         y = "Average Temperature",
+         caption = "Source: Data collected by the Urban Climate Lab",
+        color = "Month") 
+```
+Themes
+
+```{r}
+climate_data %>% 
+  ggplot(aes(x=month, y=avg_campus_temp)) +
+  geom_boxplot() +
+   labs(title = "Average Temperature Over the Summer",
+         x = "Month",
+         y = "Average Temperature",
+         caption = "Source: Data collected by the Urban Climate Lab") 
+  theme_bw()
+```
+
+```{r}
+climate_data %>% 
+  ggplot(aes(x=month, y=avg_campus_temp, color = month)) +
+  geom_boxplot() +
+   labs(title = "Average Temperature Over the Summer",
+         x = "Month",
+         y = "Average Temperature",
+         caption = "Source: Data collected by the Urban Climate Lab",
+        color = "Month") +
+  theme_dark()
+```
+```{r}
+# can also download theme packages
+install.packages("ggthemes")
+library(ggthemes)
+```
+
+```{r}
+climate_data %>% 
+  ggplot(aes(x=month, y=avg_campus_temp, color = month)) +
+  geom_boxplot() +
+   labs(title = "Average Temperature Over the Summer",
+         x = "Month",
+         y = "Average Temperature",
+         caption = "Source: Data collected by the Urban Climate Lab",
+        color = "Month") +
+  theme_solarized()
+```
+
